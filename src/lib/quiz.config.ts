@@ -237,7 +237,6 @@ export const ikeaProducts: string[] = [
 	'FRÄCK'
 ];
 
-// Complete Sigur Rós discography including solo work
 export const sigurRosSongs: string[] = [
 	// Von (1997)
 	// 'SIGUR RÓS',
