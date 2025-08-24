@@ -10,12 +10,13 @@
 	let correct: boolean | null = null;
 	let score = 0;
 	let questions: Question[] = getRandomQuestions(quizConfig.questionsPerRound);
-	
+
 	let backgroundMusic: Howl | null = null;
 	let correctSound: Howl | null = null;
 	let incorrectSound: Howl | null = null;
 	let musicEnabled = false;
 	let soundEffectsEnabled = true;
+	let showSettings = false;
 
 	function normalize(word: string) {
 		return word.toUpperCase();
@@ -49,7 +50,7 @@
 	onMount(() => {
 		// Load settings from localStorage
 		loadAudioSettings();
-		
+
 		// Initialize background music
 		backgroundMusic = new Howl({
 			src: ['sounds/njosnavelin.mp3'],
@@ -57,51 +58,51 @@
 			volume: 0.15,
 			html5: true
 		});
-		
+
 		// Initialize sound effects
 		correctSound = new Howl({
 			src: [quizConfig.sounds.correct],
 			volume: 0.8
 		});
-		
+
 		incorrectSound = new Howl({
 			src: [quizConfig.sounds.incorrect],
 			volume: 0.8
 		});
-		
+
 		// Start background music if enabled
 		if (musicEnabled) {
 			backgroundMusic.play();
 		}
 	});
-	
+
 	function loadAudioSettings() {
 		if (typeof window !== 'undefined') {
 			const savedMusicEnabled = localStorage.getItem('quiz-music-enabled');
 			const savedSoundEffectsEnabled = localStorage.getItem('quiz-sound-effects-enabled');
-			
+
 			musicEnabled = savedMusicEnabled ? JSON.parse(savedMusicEnabled) : false;
 			soundEffectsEnabled = savedSoundEffectsEnabled ? JSON.parse(savedSoundEffectsEnabled) : true;
 		}
 	}
-	
+
 	function saveAudioSettings() {
 		if (typeof window !== 'undefined') {
 			localStorage.setItem('quiz-music-enabled', JSON.stringify(musicEnabled));
 			localStorage.setItem('quiz-sound-effects-enabled', JSON.stringify(soundEffectsEnabled));
 		}
 	}
-	
+
 	onDestroy(() => {
 		// Clean up audio when component is destroyed
 		backgroundMusic?.stop();
 		correctSound?.stop();
 		incorrectSound?.stop();
 	});
-	
+
 	function toggleBackgroundMusic() {
 		if (!backgroundMusic) return;
-		
+
 		if (musicEnabled) {
 			backgroundMusic.pause();
 			musicEnabled = false;
@@ -111,15 +112,23 @@
 		}
 		saveAudioSettings();
 	}
-	
+
 	function toggleSoundEffects() {
 		soundEffectsEnabled = !soundEffectsEnabled;
 		saveAudioSettings();
 	}
-	
+
+	function openSettings() {
+		showSettings = true;
+	}
+
+	function closeSettings() {
+		showSettings = false;
+	}
+
 	function playSound(isCorrect: boolean) {
 		if (!soundEffectsEnabled) return;
-		
+
 		if (isCorrect) {
 			correctSound?.play();
 		} else {
@@ -137,14 +146,6 @@
 				<div class="logo-sigur">Sigur Rós</div>
 			</div>
 			<p class="tagline">Can you tell Swedish furniture from Icelandic art rock?</p>
-			<div class="audio-controls">
-				<button class="audio-toggle" on:click={toggleBackgroundMusic}>
-					{musicEnabled ? '🔇' : '🎵'} {musicEnabled ? 'Pause Music' : 'Play Music'}
-				</button>
-				<button class="audio-toggle" on:click={toggleSoundEffects}>
-					{soundEffectsEnabled ? '🔊' : '🔇'} {soundEffectsEnabled ? 'Sound Effects On' : 'Sound Effects Off'}
-				</button>
-			</div>
 		</header>
 
 		{#if current < questions.length}
@@ -167,7 +168,9 @@
 
 					<form on:submit|preventDefault={submit}>
 						<div class="options">
-							<label class="option {selected === 'IKEA' ? 'selected' : ''} {submitted ? 'disabled' : ''}">
+							<label
+								class="option {selected === 'IKEA' ? 'selected' : ''} {submitted ? 'disabled' : ''}"
+							>
 								<input
 									type="radio"
 									name="answer"
@@ -184,7 +187,11 @@
 								</div>
 							</label>
 
-							<label class="option {selected === 'SIGUR_ROS' ? 'selected' : ''} {submitted ? 'disabled' : ''}">
+							<label
+								class="option {selected === 'SIGUR_ROS' ? 'selected' : ''} {submitted
+									? 'disabled'
+									: ''}"
+							>
 								<input
 									type="radio"
 									name="answer"
@@ -203,9 +210,7 @@
 						</div>
 
 						{#if !submitted}
-							<button type="submit" class="submit-btn" disabled={!selected}>
-								Submit Answer
-							</button>
+							<button type="submit" class="submit-btn" disabled={!selected}> Submit Answer </button>
 						{:else}
 							<div class="result" in:scale={{ duration: 300 }}>
 								<div class="result-message {correct ? 'correct' : 'incorrect'}">
@@ -217,9 +222,7 @@
 										<div class="result-text">Not quite!</div>
 									{/if}
 								</div>
-								<button type="button" class="next-btn" on:click={next}>
-									Next Question →
-								</button>
+								<button type="button" class="next-btn" on:click={next}> Next Question → </button>
 							</div>
 						{/if}
 					</form>
@@ -229,6 +232,8 @@
 					<div class="score-label">Score</div>
 					<div class="score-value">{score}/{questions.length}</div>
 				</div>
+				
+				<button class="settings-button mt-8" on:click={openSettings}> ⚙️ Settings </button>
 			</div>
 		{:else}
 			<div class="completion-section" in:fade={{ duration: 500 }}>
@@ -257,13 +262,54 @@
 							Keep trying! Nordic names can be tricky! 🤔
 						{/if}
 					</div>
-					<button class="restart-btn" on:click={restart}>
-						Play Again
-					</button>
+					<button class="restart-btn" on:click={restart}> Play Again </button>
 				</div>
 			</div>
 		{/if}
+
+		<footer class="attribution">
+			<div class="made-with-love">
+				Made with ❤️ by <a href="http://www.danlouren.co" target="_blank" rel="noopener noreferrer"
+					>Dan Lourenço</a
+				>
+			</div>
+		</footer>
 	</div>
+
+	{#if showSettings}
+		<div class="settings-overlay" on:click={closeSettings} transition:fade={{ duration: 200 }}>
+			<div class="settings-modal" on:click|stopPropagation transition:scale={{ duration: 200 }}>
+				<div class="settings-header">
+					<h3>Settings</h3>
+					<button class="close-button" on:click={closeSettings}>✕</button>
+				</div>
+				<div class="settings-content">
+					<div class="setting-item">
+						<label class="setting-label">
+							<span class="setting-text">Background Music</span>
+							<button
+								class="toggle-switch {musicEnabled ? 'active' : ''}"
+								on:click={toggleBackgroundMusic}
+							>
+								<span class="toggle-slider"></span>
+							</button>
+						</label>
+					</div>
+					<div class="setting-item">
+						<label class="setting-label">
+							<span class="setting-text">Sound Effects</span>
+							<button
+								class="toggle-switch {soundEffectsEnabled ? 'active' : ''}"
+								on:click={toggleSoundEffects}
+							>
+								<span class="toggle-slider"></span>
+							</button>
+						</label>
+					</div>
+				</div>
+			</div>
+		</div>
+	{/if}
 </main>
 
 <style>
@@ -272,8 +318,9 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		padding: 1rem;
+		padding: 1rem 1rem 4rem 1rem;
 	}
+	
 
 	.container {
 		width: 100%;
@@ -326,15 +373,8 @@
 		margin-top: 0.5rem;
 		margin-bottom: 1rem;
 	}
-	
-	.audio-controls {
-		display: flex;
-		gap: 1rem;
-		justify-content: center;
-		flex-wrap: wrap;
-	}
-	
-	.audio-toggle {
+
+	.settings-button {
 		background: rgba(255, 255, 255, 0.2);
 		border: 2px solid rgba(255, 255, 255, 0.3);
 		border-radius: 2rem;
@@ -348,13 +388,123 @@
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
-		white-space: nowrap;
+		margin-top: 2rem;
 	}
-	
-	.audio-toggle:hover {
+
+	.settings-button:hover {
 		background: rgba(255, 255, 255, 0.3);
 		border-color: rgba(255, 255, 255, 0.5);
 		transform: translateY(-1px);
+	}
+
+	.settings-overlay {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background: rgba(0, 0, 0, 0.5);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		z-index: 2000;
+		padding: 1rem;
+	}
+
+	.settings-modal {
+		background: white;
+		border-radius: 1rem;
+		padding: 0;
+		max-width: 400px;
+		width: 100%;
+		box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+	}
+
+	.settings-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 1.5rem;
+		border-bottom: 1px solid #eee;
+	}
+
+	.settings-header h3 {
+		margin: 0;
+		font-size: 1.25rem;
+		font-weight: 600;
+		color: var(--text-dark);
+	}
+
+	.close-button {
+		background: none;
+		border: none;
+		font-size: 1.25rem;
+		cursor: pointer;
+		color: var(--text-light);
+		padding: 0.25rem;
+		border-radius: 0.25rem;
+		transition: all 0.2s ease;
+	}
+
+	.close-button:hover {
+		background: #f0f0f0;
+		color: var(--text-dark);
+	}
+
+	.settings-content {
+		padding: 1.5rem;
+	}
+
+	.setting-item {
+		margin-bottom: 1.5rem;
+	}
+
+	.setting-item:last-child {
+		margin-bottom: 0;
+	}
+
+	.setting-label {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		cursor: pointer;
+	}
+
+	.setting-text {
+		font-size: 1rem;
+		color: var(--text-dark);
+		font-weight: 500;
+	}
+
+	.toggle-switch {
+		position: relative;
+		width: 48px;
+		height: 26px;
+		background: #ccc;
+		border: none;
+		border-radius: 13px;
+		cursor: pointer;
+		transition: background 0.3s ease;
+	}
+
+	.toggle-switch.active {
+		background: var(--ikea-blue);
+	}
+
+	.toggle-slider {
+		position: absolute;
+		top: 2px;
+		left: 2px;
+		width: 22px;
+		height: 22px;
+		background: white;
+		border-radius: 50%;
+		transition: transform 0.3s ease;
+		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+	}
+
+	.toggle-switch.active .toggle-slider {
+		transform: translateX(22px);
 	}
 
 	.quiz-section {
@@ -650,26 +800,124 @@
 		box-shadow: 0 4px 12px rgba(255, 219, 0, 0.4);
 	}
 
+	.attribution {
+		position: fixed;
+		bottom: 0;
+		left: 0;
+		right: 0;
+		padding: 0.75rem 0;
+		text-align: center;
+		background: rgba(255, 255, 255, 0.95);
+		backdrop-filter: blur(10px);
+		border-top: 1px solid rgba(0, 0, 0, 0.1);
+		z-index: 1000;
+	}
+
+	.made-with-love {
+		color: var(--text-light);
+		font-size: 0.875rem;
+	}
+
+	.made-with-love a {
+		color: var(--ikea-blue);
+		text-decoration: none;
+		font-weight: 600;
+		transition: color 0.3s ease;
+	}
+
+	.made-with-love a:hover {
+		color: var(--iceland-blue);
+		text-decoration: underline;
+	}
+
 	@media (max-width: 640px) {
+		main {
+			align-items: flex-start;
+			padding: 0.5rem 1rem 4rem 1rem;
+		}
+		
+		.container {
+			margin-top: 1rem;
+		}
+		
+		header {
+			margin-bottom: 1rem;
+		}
+		
 		.logo-ikea,
 		.logo-sigur {
-			font-size: 2rem;
+			font-size: 1.75rem;
+		}
+		
+		.logo-or {
+			font-size: 1rem;
+		}
+		
+		.tagline {
+			display: none;
 		}
 
 		.word {
-			font-size: 2.5rem;
+			font-size: 2rem;
+			margin-bottom: 2rem;
 		}
 
 		.quiz-card {
-			padding: 2rem 1.5rem;
+			padding: 1.5rem 1rem;
+		}
+		
+		.question-number {
+			top: 1rem;
+			right: 1rem;
+			font-size: 0.75rem;
 		}
 
 		.option-card {
-			padding: 1.25rem;
+			padding: 1rem;
+			gap: 1rem;
+		}
+		
+		.option-icon {
+			width: 2.5rem;
+			height: 2.5rem;
+			font-size: 1.5rem;
+		}
+		
+		.option-title {
+			font-size: 1.125rem;
+		}
+		
+		.option-subtitle {
+			font-size: 0.8rem;
+		}
+		
+		.submit-btn,
+		.next-btn {
+			padding: 0.875rem 1.5rem;
+			font-size: 1rem;
+		}
+		
+		.score-display {
+			margin-top: 1rem;
+			padding: 0.75rem;
+		}
+		
+		.score-value {
+			font-size: 1.5rem;
 		}
 
 		.final-score-value {
-			font-size: 2.5rem;
+			font-size: 2rem;
+		}
+
+		.settings-button {
+			font-size: 0.75rem;
+			padding: 0.4rem 0.8rem;
+		}
+		
+		
+		.progress-bar {
+			margin-bottom: 1.5rem;
 		}
 	}
 </style>
