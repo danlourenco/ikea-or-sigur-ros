@@ -2,7 +2,8 @@
 	import { quizConfig, getRandomQuestions, type Question } from '$lib/quiz.config';
 	import { fade, fly, scale } from 'svelte/transition';
 	import { onMount, onDestroy } from 'svelte';
-	import { Howl } from 'howler';
+	import { browser } from '$app/environment';
+	import type { Howl } from 'howler';
 
 	let current = 0;
 	let selected: string | null = null;
@@ -47,35 +48,40 @@
 		questions = getRandomQuestions(quizConfig.questionsPerRound || 10);
 	}
 
-	onMount(() => {
+	onMount(async () => {
 		// Initialize questions
 		questions = getRandomQuestions(quizConfig.questionsPerRound || 10);
 		
 		// Load settings from localStorage
 		loadAudioSettings();
 
-		// Initialize background music
-		backgroundMusic = new Howl({
-			src: ['sounds/njosnavelin.mp3'],
-			loop: true,
-			volume: 0.15,
-			html5: true
-		});
+		// Only initialize audio in browser environment
+		if (browser) {
+			const { Howl } = await import('howler');
+			
+			// Initialize background music
+			backgroundMusic = new Howl({
+				src: ['sounds/njosnavelin.mp3'],
+				loop: true,
+				volume: 0.15,
+				html5: true
+			});
 
-		// Initialize sound effects
-		correctSound = new Howl({
-			src: [quizConfig.sounds.correct],
-			volume: 0.8
-		});
+			// Initialize sound effects
+			correctSound = new Howl({
+				src: [quizConfig.sounds.correct],
+				volume: 0.8
+			});
 
-		incorrectSound = new Howl({
-			src: [quizConfig.sounds.incorrect],
-			volume: 0.8
-		});
+			incorrectSound = new Howl({
+				src: [quizConfig.sounds.incorrect],
+				volume: 0.8
+			});
 
-		// Start background music if enabled
-		if (musicEnabled) {
-			backgroundMusic.play();
+			// Start background music if enabled
+			if (musicEnabled) {
+				backgroundMusic.play();
+			}
 		}
 	});
 
@@ -130,7 +136,7 @@
 	}
 
 	function playSound(isCorrect: boolean) {
-		if (!soundEffectsEnabled) return;
+		if (!soundEffectsEnabled || !browser) return;
 
 		if (isCorrect) {
 			correctSound?.play();
