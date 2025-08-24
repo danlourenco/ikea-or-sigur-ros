@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v1.2.3
+
+[compare changes](https://github.com/danlourenco/ikea-or-sigur-ros/compare/v1.2.2...v1.2.3)
+
+### 📖 Documentation
+
+- Update README with project overview and methodology study ([ad065e7](https://github.com/danlourenco/ikea-or-sigur-ros/commit/ad065e7))
+
+### ❤️ Contributors
+
+- Dan Lourenco <danlourenco@gmail.com>
+
 ## v1.2.2
 
 [compare changes](https://github.com/danlourenco/ikea-or-sigur-ros/compare/v1.2.0...v1.2.2)
