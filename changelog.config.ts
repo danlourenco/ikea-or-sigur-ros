@@ -1,7 +1,7 @@
 export default {
 	// Repository information
 	repo: {
-		repo: 'ikea-or-sigur-ros',
+		repo: 'danlourenco/ikea-or-sigur-ros',
 		provider: 'github',
 		domain: 'github.com'
 	},
