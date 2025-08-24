@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { quizConfig } from '$lib/quiz.config';
+	import { quizConfig, getRandomQuestions, type Question } from '$lib/quiz.config';
 	import { fade, fly, scale } from 'svelte/transition';
 
 	let current = 0;
@@ -7,6 +7,7 @@
 	let submitted = false;
 	let correct: boolean | null = null;
 	let score = 0;
+	let questions: Question[] = getRandomQuestions(quizConfig.questionsPerRound);
 
 	function normalize(word: string) {
 		return word.toUpperCase();
@@ -15,7 +16,7 @@
 	function submit() {
 		if (selected) {
 			submitted = true;
-			correct = selected === quizConfig.questions[current].answer;
+			correct = selected === questions[current].answer;
 			if (correct) score++;
 			playSound(correct ? quizConfig.sounds.correct : quizConfig.sounds.incorrect);
 		}
@@ -34,6 +35,7 @@
 		submitted = false;
 		correct = null;
 		score = 0;
+		questions = getRandomQuestions(quizConfig.questionsPerRound);
 	}
 
 	function playSound(src: string) {
@@ -53,22 +55,22 @@
 			<p class="tagline">Can you tell Swedish furniture from Icelandic art rock?</p>
 		</header>
 
-		{#if current < quizConfig.questions.length}
+		{#if current < questions.length}
 			<div class="quiz-section" in:fade={{ duration: 300 }}>
 				<div class="progress-bar">
 					<div
 						class="progress-fill"
-						style="width: {((current + 1) / quizConfig.questions.length) * 100}%"
+						style="width: {((current + 1) / questions.length) * 100}%"
 					></div>
 				</div>
 
 				<div class="quiz-card">
 					<div class="question-number">
-						Question {current + 1} of {quizConfig.questions.length}
+						Question {current + 1} of {questions.length}
 					</div>
 
 					<h2 class="word" in:fly={{ y: 20, duration: 400 }}>
-						{normalize(quizConfig.questions[current].word)}
+						{normalize(questions[current].word)}
 					</h2>
 
 					<form on:submit|preventDefault={submit}>
@@ -133,7 +135,7 @@
 
 				<div class="score-display">
 					<div class="score-label">Score</div>
-					<div class="score-value">{score}/{quizConfig.questions.length}</div>
+					<div class="score-value">{score}/{questions.length}</div>
 				</div>
 			</div>
 		{:else}
@@ -144,20 +146,20 @@
 					<div class="final-score">
 						<div class="final-score-label">Your Final Score</div>
 						<div class="final-score-value">
-							{score} / {quizConfig.questions.length}
+							{score} / {questions.length}
 						</div>
 						<div class="final-score-percentage">
-							{Math.round((score / quizConfig.questions.length) * 100)}%
+							{Math.round((score / questions.length) * 100)}%
 						</div>
 					</div>
 					<div class="completion-message">
-						{#if score === quizConfig.questions.length}
+						{#if score === questions.length}
 							Perfect! You're a true Nordic expert! 🌟
-						{:else if score >= quizConfig.questions.length * 0.8}
+						{:else if score >= questions.length * 0.8}
 							Excellent work! You know your IKEA from your Sigur Rós! 👏
-						{:else if score >= quizConfig.questions.length * 0.6}
+						{:else if score >= questions.length * 0.6}
 							Good job! You've got a decent grasp of Nordic culture! 👍
-						{:else if score >= quizConfig.questions.length * 0.4}
+						{:else if score >= questions.length * 0.4}
 							Not bad! With a bit more practice, you'll master it! 💪
 						{:else}
 							Keep trying! Nordic names can be tricky! 🤔
