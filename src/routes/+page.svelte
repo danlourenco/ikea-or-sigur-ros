@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { quizConfig, getRandomQuestions, type Question } from '$lib/quiz.config';
 	import { fade, fly, scale } from 'svelte/transition';
+	import { onMount, onDestroy } from 'svelte';
+	import { Howl } from 'howler';
 
 	let current = 0;
 	let selected: string | null = null;
@@ -8,6 +10,12 @@
 	let correct: boolean | null = null;
 	let score = 0;
 	let questions: Question[] = getRandomQuestions(quizConfig.questionsPerRound);
+	
+	let backgroundMusic: Howl | null = null;
+	let correctSound: Howl | null = null;
+	let incorrectSound: Howl | null = null;
+	let musicEnabled = false;
+	let soundEffectsEnabled = true;
 
 	function normalize(word: string) {
 		return word.toUpperCase();
@@ -18,7 +26,7 @@
 			submitted = true;
 			correct = selected === questions[current].answer;
 			if (correct) score++;
-			playSound(correct ? quizConfig.sounds.correct : quizConfig.sounds.incorrect);
+			playSound(correct);
 		}
 	}
 
@@ -38,9 +46,85 @@
 		questions = getRandomQuestions(quizConfig.questionsPerRound);
 	}
 
-	function playSound(src: string) {
-		const audio = new Audio(src);
-		audio.play().catch(() => {});
+	onMount(() => {
+		// Load settings from localStorage
+		loadAudioSettings();
+		
+		// Initialize background music
+		backgroundMusic = new Howl({
+			src: ['sounds/njosnavelin.mp3'],
+			loop: true,
+			volume: 0.15,
+			html5: true
+		});
+		
+		// Initialize sound effects
+		correctSound = new Howl({
+			src: [quizConfig.sounds.correct],
+			volume: 0.8
+		});
+		
+		incorrectSound = new Howl({
+			src: [quizConfig.sounds.incorrect],
+			volume: 0.8
+		});
+		
+		// Start background music if enabled
+		if (musicEnabled) {
+			backgroundMusic.play();
+		}
+	});
+	
+	function loadAudioSettings() {
+		if (typeof window !== 'undefined') {
+			const savedMusicEnabled = localStorage.getItem('quiz-music-enabled');
+			const savedSoundEffectsEnabled = localStorage.getItem('quiz-sound-effects-enabled');
+			
+			musicEnabled = savedMusicEnabled ? JSON.parse(savedMusicEnabled) : false;
+			soundEffectsEnabled = savedSoundEffectsEnabled ? JSON.parse(savedSoundEffectsEnabled) : true;
+		}
+	}
+	
+	function saveAudioSettings() {
+		if (typeof window !== 'undefined') {
+			localStorage.setItem('quiz-music-enabled', JSON.stringify(musicEnabled));
+			localStorage.setItem('quiz-sound-effects-enabled', JSON.stringify(soundEffectsEnabled));
+		}
+	}
+	
+	onDestroy(() => {
+		// Clean up audio when component is destroyed
+		backgroundMusic?.stop();
+		correctSound?.stop();
+		incorrectSound?.stop();
+	});
+	
+	function toggleBackgroundMusic() {
+		if (!backgroundMusic) return;
+		
+		if (musicEnabled) {
+			backgroundMusic.pause();
+			musicEnabled = false;
+		} else {
+			backgroundMusic.play();
+			musicEnabled = true;
+		}
+		saveAudioSettings();
+	}
+	
+	function toggleSoundEffects() {
+		soundEffectsEnabled = !soundEffectsEnabled;
+		saveAudioSettings();
+	}
+	
+	function playSound(isCorrect: boolean) {
+		if (!soundEffectsEnabled) return;
+		
+		if (isCorrect) {
+			correctSound?.play();
+		} else {
+			incorrectSound?.play();
+		}
 	}
 </script>
 
@@ -53,6 +137,14 @@
 				<div class="logo-sigur">Sigur Rós</div>
 			</div>
 			<p class="tagline">Can you tell Swedish furniture from Icelandic art rock?</p>
+			<div class="audio-controls">
+				<button class="audio-toggle" on:click={toggleBackgroundMusic}>
+					{musicEnabled ? '🔇' : '🎵'} {musicEnabled ? 'Pause Music' : 'Play Music'}
+				</button>
+				<button class="audio-toggle" on:click={toggleSoundEffects}>
+					{soundEffectsEnabled ? '🔊' : '🔇'} {soundEffectsEnabled ? 'Sound Effects On' : 'Sound Effects Off'}
+				</button>
+			</div>
 		</header>
 
 		{#if current < questions.length}
@@ -232,6 +324,37 @@
 		color: var(--text-light);
 		font-size: 1rem;
 		margin-top: 0.5rem;
+		margin-bottom: 1rem;
+	}
+	
+	.audio-controls {
+		display: flex;
+		gap: 1rem;
+		justify-content: center;
+		flex-wrap: wrap;
+	}
+	
+	.audio-toggle {
+		background: rgba(255, 255, 255, 0.2);
+		border: 2px solid rgba(255, 255, 255, 0.3);
+		border-radius: 2rem;
+		padding: 0.5rem 1rem;
+		color: var(--text-dark);
+		font-size: 0.875rem;
+		font-weight: 500;
+		cursor: pointer;
+		transition: all 0.3s ease;
+		backdrop-filter: blur(10px);
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		white-space: nowrap;
+	}
+	
+	.audio-toggle:hover {
+		background: rgba(255, 255, 255, 0.3);
+		border-color: rgba(255, 255, 255, 0.5);
+		transform: translateY(-1px);
 	}
 
 	.quiz-section {
