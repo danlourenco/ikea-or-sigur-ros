@@ -9,7 +9,7 @@
 	let submitted = false;
 	let correct: boolean | null = null;
 	let score = 0;
-	let questions: Question[] = getRandomQuestions(quizConfig.questionsPerRound);
+	let questions: Question[] = [];
 
 	let backgroundMusic: Howl | null = null;
 	let correctSound: Howl | null = null;
@@ -44,10 +44,13 @@
 		submitted = false;
 		correct = null;
 		score = 0;
-		questions = getRandomQuestions(quizConfig.questionsPerRound);
+		questions = getRandomQuestions(quizConfig.questionsPerRound || 10);
 	}
 
 	onMount(() => {
+		// Initialize questions
+		questions = getRandomQuestions(quizConfig.questionsPerRound || 10);
+		
 		// Load settings from localStorage
 		loadAudioSettings();
 
@@ -148,7 +151,7 @@
 			<p class="tagline">Can you tell Swedish furniture from Icelandic art rock?</p>
 		</header>
 
-		{#if current < questions.length}
+		{#if questions.length > 0 && current < questions.length}
 			<div class="quiz-section" in:fade={{ duration: 300 }}>
 				<div class="progress-bar">
 					<div
@@ -235,7 +238,7 @@
 				
 				<button class="settings-button mt-8" on:click={openSettings}> ⚙️ Settings </button>
 			</div>
-		{:else}
+		{:else if questions.length > 0}
 			<div class="completion-section" in:fade={{ duration: 500 }}>
 				<div class="completion-card">
 					<div class="completion-icon">🎉</div>
