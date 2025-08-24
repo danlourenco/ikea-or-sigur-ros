@@ -3,6 +3,22 @@
 
 ## v1.1.0
 
+[compare changes](https://github.com/ikea-or-sigur-ros/compare/v1.1.0...v1.1.0)
+
+### 🚀 Features
+
+- Add changelogen for automated changelog and version management ([9c32e57](https://github.com/ikea-or-sigur-ros/commit/9c32e57))
+
+### 🏡 Chore
+
+- Update package name ([4f4b952](https://github.com/ikea-or-sigur-ros/commit/4f4b952))
+
+### ❤️ Contributors
+
+- Dan Lourenco <danlourenco@gmail.com>
+
+## v1.1.0
+
 
 ### 🚀 Features
 
